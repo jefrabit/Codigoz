@@ -5,282 +5,200 @@ using namespace std;
 const int MAX = 20;
 const double EPS = 1e-9;
 
-int m, n;
-double c[MAX][MAX];      // costos
-double of[MAX], dem[MAX]; // residuales
-double x[MAX][MAX];      // asignaciones
-bool filaOK[MAX], colOK[MAX];
+int numFilas, numCols;
+double costo[MAX][MAX], oferta[MAX], demanda[MAX], asignacion[MAX][MAX];
+bool filaActiva[MAX], colActiva[MAX];
 
-double maxOferta() {
-    double mx = -1;
-    for (int i = 0; i < m; i++)
-        if (filaOK[i] && of[i] > mx) mx = of[i];
-    return mx;
+double maximo(double valores[], bool activos[]) {
+    double mejor = -1;
+    for (int i = 0; i < (numFilas > numCols ? numFilas : numCols); i++)
+        if (activos[i] && valores[i] > mejor) mejor = valores[i];
+    return mejor;
 }
 
-double maxDemanda() {
-    double mx = -1;
-    for (int j = 0; j < n; j++)
-        if (colOK[j] && dem[j] > mx) mx = dem[j];
-    return mx;
+int indicesMax(double valores[], bool activos[], double maximo, int indices[]) {
+    int cantidad = 0;
+    for (int i = 0; i < (numFilas > numCols ? numFilas : numCols); i++)
+        if (activos[i] && valores[i] > maximo - EPS && valores[i] < maximo + EPS)
+            indices[cantidad++] = i;
+    return cantidad;
 }
 
-// Cuenta y guarda indices con valor max
-int filasMax(double mx, int idx[]) {
-    int k = 0;
-    for (int i = 0; i < m; i++)
-        if (filaOK[i] && of[i] > mx - EPS && of[i] < mx + EPS)
-            idx[k++] = i;
-    return k;
-}
-
-int colsMax(double mx, int idx[]) {
-    int k = 0;
-    for (int j = 0; j < n; j++)
-        if (colOK[j] && dem[j] > mx - EPS && dem[j] < mx + EPS)
-            idx[k++] = j;
-    return k;
-}
-
-// Entre candidatos (nFil x nCol), elige menor costo
-void menorCosto(int fil[], int nFil, int col[], int nCol, int& bi, int& bj) {
-    bi = fil[0];
-    bj = col[0];
-    double minC = c[bi][bj];
-    for (int a = 0; a < nFil; a++) {
-        for (int b = 0; b < nCol; b++) {
-            int i = fil[a], j = col[b];
-            if (c[i][j] < minC) {
-                minC = c[i][j];
-                bi = i;
-                bj = j;
+void elegirCelda(int candFilas[], int numCandFilas, int candCols[], int numCandCols, int& mejorFila, int& mejorCol) {
+    mejorFila = candFilas[0]; mejorCol = candCols[0];
+    double menorCosto = costo[mejorFila][mejorCol], mejorSuma = 0;
+    for (int a = 0; a < numCandFilas; a++) {
+        double sumaFila = 0;
+        for (int j = 0; j < numCols; j++)
+            if (colActiva[j]) sumaFila += costo[candFilas[a]][j];
+        for (int b = 0; b < numCandCols; b++) {
+            int i = candFilas[a], j = candCols[b];
+            if (costo[i][j] < menorCosto - EPS ||
+                (costo[i][j] < menorCosto + EPS && sumaFila > mejorSuma + EPS)) {
+                menorCosto = costo[i][j]; mejorSuma = sumaFila;
+                mejorFila = i; mejorCol = j;
             }
         }
     }
 }
 
-bool quedaTrabajo() {
-    for (int i = 0; i < m; i++)
-        if (filaOK[i] && of[i] > EPS) return true;
-    for (int j = 0; j < n; j++)
-        if (colOK[j] && dem[j] > EPS) return true;
+bool hayTrabajo() {
+    for (int i = 0; i < numFilas; i++) if (filaActiva[i] && oferta[i] > EPS) return true;
+    for (int j = 0; j < numCols; j++) if (colActiva[j] && demanda[j] > EPS) return true;
     return false;
 }
 
-// Tabla actual: cant(c) o -(c); of/dem residuales
 void mostrarTabla() {
     cout << "      ";
-    for (int j = 0; j < n; j++) cout << "  D" << j + 1 << "   ";
+    for (int j = 0; j < numCols; j++) cout << "  D" << j+1 << "   ";
     cout << "  of\n";
-    for (int i = 0; i < m; i++) {
-        cout << "O" << i + 1 << "  ";
-        for (int j = 0; j < n; j++) {
-            if (!filaOK[i] || !colOK[j])
-                cout << "   x    ";
-            else if (x[i][j] > EPS)
-                cout << x[i][j] << "(" << c[i][j] << ")  ";
-            else
-                cout << "-(" << c[i][j] << ")  ";
+    for (int i = 0; i < numFilas; i++) {
+        cout << "O" << i+1 << "  ";
+        for (int j = 0; j < numCols; j++) {
+            if (!filaActiva[i] || !colActiva[j]) cout << "   x    ";
+            else if (asignacion[i][j] > EPS) cout << asignacion[i][j] << "(" << costo[i][j] << ")  ";
+            else cout << "-(" << costo[i][j] << ")  ";
         }
-        cout << of[i];
-        if (!filaOK[i]) cout << " [out]";
-        cout << "\n";
+        cout << oferta[i] << (filaActiva[i] ? "" : " [out]") << "\n";
     }
     cout << "dem ";
-    for (int j = 0; j < n; j++) {
-        cout << " " << dem[j];
-        if (!colOK[j]) cout << "[out]";
-        cout << "  ";
-    }
+    for (int j = 0; j < numCols; j++)
+        cout << " " << demanda[j] << (colActiva[j] ? "  " : "[out] ");
     cout << "\n";
+}
+
+void mostrarResultado(double costoTotal) {
+    cout << "\n--- Resultado ---\n";
+    for (int i = 0; i < numFilas; i++)
+        for (int j = 0; j < numCols; j++)
+            if (asignacion[i][j] > EPS)
+                cout << "O"<<i+1<<"->D"<<j+1<<" = "<<asignacion[i][j]
+                     <<" (c="<<costo[i][j]<<", costo="<<asignacion[i][j]*costo[i][j]<<")\n";
+    cout << "COSTO TOTAL = " << costoTotal << "\n\n";
+
+    cout << "--- Tabla final (cant | c) ---\n      ";
+    for (int j = 0; j < numCols; j++) cout << "    D" << j+1 << "   ";
+    cout << "\n";
+    for (int i = 0; i < numFilas; i++) {
+        cout << "O" << i+1 << "   ";
+        for (int j = 0; j < numCols; j++) {
+            if (asignacion[i][j] > EPS) cout << asignacion[i][j] << "(" << costo[i][j] << ")  ";
+            else cout << "-(" << costo[i][j] << ")  ";
+        }
+        cout << "\n";
+    }
 }
 
 void resolver() {
-    for (int i = 0; i < m; i++) {
-        filaOK[i] = true;
-        for (int j = 0; j < n; j++) x[i][j] = 0;
+    for (int i = 0; i < numFilas; i++) {
+        filaActiva[i] = true;
+        for (int j = 0; j < numCols; j++) asignacion[i][j] = 0;
     }
-    for (int j = 0; j < n; j++) colOK[j] = true;
+    for (int j = 0; j < numCols; j++) colActiva[j] = true;
 
     cout << "\n--- Datos ---\n";
-    for (int i = 0; i < m; i++) {
-        for (int j = 0; j < n; j++) cout << c[i][j] << " ";
-        cout << "| of=" << of[i] << "\n";
+    for (int i = 0; i < numFilas; i++) {
+        for (int j = 0; j < numCols; j++) cout << costo[i][j] << " ";
+        cout << "| of=" << oferta[i] << "\n";
     }
     cout << "dem: ";
-    for (int j = 0; j < n; j++) cout << dem[j] << " ";
+    for (int j = 0; j < numCols; j++) cout << demanda[j] << " ";
     cout << "\n";
 
-    int paso = 0;
-    double total = 0;
+    double costoTotal = 0;
+    int iteracion = 0;
 
-    while (quedaTrabajo()) {
-        paso++;
-        double maxO = maxOferta();
-        double maxD = maxDemanda();
+    while (hayTrabajo()) {
+        iteracion++;
+        double maxOferta = maximo(oferta, filaActiva);
+        double maxDemanda = maximo(demanda, colActiva);
+        int candFilas[MAX], candCols[MAX];
+        int numCandFilas = indicesMax(oferta, filaActiva, maxOferta, candFilas);
+        int numCandCols = indicesMax(demanda, colActiva, maxDemanda, candCols);
 
-        int F[MAX], C[MAX];
-        int nF = filasMax(maxO, F);
-        int nC = colsMax(maxD, C);
-
-        cout << "\n=== Iter " << paso << " ===\n";
+        cout << "\n=== Iter " << iteracion << " ===\n";
         mostrarTabla();
-        cout << "Paso 1: max oferta=" << maxO << " | max demanda=" << maxD << "\n";
+        cout << "Paso 1: max oferta=" << maxOferta << " | max demanda=" << maxDemanda << "\n";
 
         int i, j;
-
-        // Paso 2: reglas de empate
-        if (nF == 1 && nC == 1) {
-            // Regla C: interseccion
-            i = F[0];
-            j = C[0];
-            cout << "Paso 2: Regla C -> O" << i + 1 << "-D" << j + 1
-                 << " (c=" << c[i][j] << ")\n";
-        } else if (nF == 1 && nC > 1) {
-            // Regla A: empate en demandas
-            menorCosto(F, nF, C, nC, i, j);
-            cout << "Paso 2: Regla A (empate demandas) -> O" << i + 1
-                 << "-D" << j + 1 << " (c=" << c[i][j] << ")\n";
-        } else if (nF > 1 && nC == 1) {
-            // Regla B: empate en ofertas
-            menorCosto(F, nF, C, nC, i, j);
-            cout << "Paso 2: Regla B (empate ofertas) -> O" << i + 1
-                 << "-D" << j + 1 << " (c=" << c[i][j] << ")\n";
+        if (numCandFilas == 1 && numCandCols == 1) {
+            i = candFilas[0]; j = candCols[0];
+            cout << "Paso 2: Regla C -> O"<<i+1<<"-D"<<j+1<<" (c="<<costo[i][j]<<")\n";
         } else {
-            // Empate cruzado: menor costo entre intersecciones
-            menorCosto(F, nF, C, nC, i, j);
-            cout << "Paso 2: Empate cruzado (menor costo) -> O" << i + 1
-                 << "-D" << j + 1 << " (c=" << c[i][j] << ")\n";
+            elegirCelda(candFilas, numCandFilas, candCols, numCandCols, i, j);
+            string regla = (numCandFilas == 1) ? "A (empate demandas)" : (numCandCols == 1) ? "B (empate ofertas)" : "Cruzado (menor costo)";
+            cout << "Paso 2: Regla " << regla << " -> O"<<i+1<<"-D"<<j+1<<" (c="<<costo[i][j]<<")\n";
         }
 
-        // Paso 3
-        double cant = of[i] < dem[j] ? of[i] : dem[j];
-        cout << "Paso 3: asignar " << cant << "\n";
+        double cantidadAsignar = min(oferta[i], demanda[j]);
+        cout << "Paso 3: asignar " << cantidadAsignar << "\n";
 
-        // Paso 4
-        x[i][j] += cant;
-        of[i] -= cant;
-        dem[j] -= cant;
-        total += cant * c[i][j];
+        asignacion[i][j] += cantidadAsignar;
+        oferta[i] -= cantidadAsignar;
+        demanda[j] -= cantidadAsignar;
+        costoTotal += cantidadAsignar * costo[i][j];
+        cout << "Paso 4: of O"<<i+1<<"="<<oferta[i]<<" | dem D"<<j+1<<"="<<demanda[j]<<"\n";
 
-        cout << "Paso 4: of O" << i + 1 << "=" << of[i]
-             << " | dem D" << j + 1 << "=" << dem[j] << "\n";
+        if (oferta[i] <= EPS) oferta[i] = 0;
+        if (demanda[j] <= EPS) demanda[j] = 0;
 
-        bool ofCero = of[i] <= EPS;
-        bool demCero = dem[j] <= EPS;
+        bool ofertaEnCero = oferta[i] <= EPS;
+        bool demandaEnCero = demanda[j] <= EPS;
 
-        if (ofCero) of[i] = 0;
-        if (demCero) dem[j] = 0;
-
-        // Caso degen.: se agotaron oferta y demanda a la vez
-        if (ofCero && demCero) {
-            int op;
-            cout << "Tabla al elegir (of y dem en 0):\n";
-            mostrarTabla();
-            cout << "Oferta y demanda en cero. Eliminar:\n"
-                 << "  1) Fila (O" << i + 1 << ")\n"
-                 << "  2) Columna (D" << j + 1 << ")\n"
-                 << "Opcion: ";
-            cin >> op;
-            if (op == 2) {
-                colOK[j] = false;
-                cout << "-> se elimina columna D" << j + 1 << "\n";
-            } else {
-                filaOK[i] = false;
-                cout << "-> se elimina fila O" << i + 1 << "\n";
-            }
+        if (ofertaEnCero && demandaEnCero) {
+            filaActiva[i] = false;
+            cout << "Caso degen: se elimina fila O" << i+1 << "\n";
         } else {
-            if (ofCero) filaOK[i] = false;
-            if (demCero) colOK[j] = false;
+            if (ofertaEnCero) filaActiva[i] = false;
+            if (demandaEnCero) colActiva[j] = false;
         }
     }
 
-    cout << "\n--- Resultado ---\n";
-    for (int i = 0; i < m; i++) {
-        for (int j = 0; j < n; j++) {
-            if (x[i][j] > EPS)
-                cout << "O" << i + 1 << "->D" << j + 1
-                     << " = " << x[i][j] << " (c=" << c[i][j]
-                     << ", costo=" << x[i][j] * c[i][j] << ")\n";
-        }
-    }
-    cout << "COSTO TOTAL = " << total << "\n";
-
-    // Tabla final: cantidad (costo unitario)
-    cout << "\n--- Tabla final (cant | c) ---\n";
-    cout << "      ";
-    for (int j = 0; j < n; j++)
-        cout << "    D" << j + 1 << "   ";
-    cout << "\n";
-    for (int i = 0; i < m; i++) {
-        cout << "O" << i + 1 << "   ";
-        for (int j = 0; j < n; j++) {
-            if (x[i][j] > EPS)
-                cout << x[i][j] << "(" << c[i][j] << ")  ";
-            else
-                cout << "-(" << c[i][j] << ")  ";
-        }
-        cout << "\n";
-    }
+    mostrarResultado(costoTotal);
 }
 
-bool leerArchivo(const char* ruta) {
-    ifstream in(ruta);
-    if (!in) {
-        cout << "No se pudo abrir " << ruta << "\n";
-        return false;
-    }
-    in >> m >> n;
-    for (int i = 0; i < m; i++)
-        for (int j = 0; j < n; j++)
-            in >> c[i][j];
-    for (int i = 0; i < m; i++) in >> of[i];
-    for (int j = 0; j < n; j++) in >> dem[j];
+bool leerArchivo(const char* nombreArchivo) {
+    ifstream archivo(nombreArchivo);
+    if (!archivo) { cout << "No se pudo abrir " << nombreArchivo << "\n"; return false; }
+    archivo >> numFilas >> numCols;
+    for (int i = 0; i < numFilas; i++)
+        for (int j = 0; j < numCols; j++)
+            archivo >> costo[i][j];
+    for (int i = 0; i < numFilas; i++) archivo >> oferta[i];
+    for (int j = 0; j < numCols; j++) archivo >> demanda[j];
     return true;
 }
 
 bool leerTeclado() {
-    cout << "m n: ";
-    cin >> m >> n;
-    cout << "Costos (" << m << "x" << n << "):\n";
-    for (int i = 0; i < m; i++)
-        for (int j = 0; j < n; j++)
-            cin >> c[i][j];
-    cout << "Ofertas (" << m << "):\n";
-    for (int i = 0; i < m; i++) cin >> of[i];
-    cout << "Demandas (" << n << "):\n";
-    for (int j = 0; j < n; j++) cin >> dem[j];
+    cout << "Filas Columnas: "; cin >> numFilas >> numCols;
+    cout << "Costos (" << numFilas << "x" << numCols << "):\n";
+    for (int i = 0; i < numFilas; i++)
+        for (int j = 0; j < numCols; j++)
+            cin >> costo[i][j];
+    cout << "Ofertas (" << numFilas << "):\n";
+    for (int i = 0; i < numFilas; i++) cin >> oferta[i];
+    cout << "Demandas (" << numCols << "):\n";
+    for (int j = 0; j < numCols; j++) cin >> demanda[j];
     return true;
 }
 
 int main() {
     cout << "Heuristica Mayor Oferta x Mayor Demanda\n";
     cout << "1) Teclado  2) Archivo\nOpcion: ";
-    int op;
-    cin >> op;
+    int opcion; cin >> opcion;
 
-    bool ok = false;
-    if (op == 1) {
-        ok = leerTeclado();
-    } else if (op == 2) {
-        char ruta[200];
-        cout << "Archivo: ";
-        cin >> ruta;
-        ok = leerArchivo(ruta);
-    } else {
-        return 0;
-    }
-    if (!ok) return 1;
+    bool exito = false;
+    if (opcion == 1) exito = leerTeclado();
+    else if (opcion == 2) { char nombre[200]; cout << "Archivo: "; cin >> nombre; exito = leerArchivo(nombre); }
+    if (!exito) return 1;
 
-    double sumO = 0, sumD = 0;
-    for (int i = 0; i < m; i++) sumO += of[i];
-    for (int j = 0; j < n; j++) sumD += dem[j];
-    if (sumO < sumD - EPS || sumO > sumD + EPS) {
-        cout << "No hay equilibrio: oferta=" << sumO
-             << " demanda=" << sumD << "\n";
+    double sumaOfertas = 0, sumaDemandas = 0;
+    for (int i = 0; i < numFilas; i++) sumaOfertas += oferta[i];
+    for (int j = 0; j < numCols; j++) sumaDemandas += demanda[j];
+    if (sumaOfertas < sumaDemandas - EPS || sumaOfertas > sumaDemandas + EPS) {
+        cout << "No hay equilibrio: oferta=" << sumaOfertas << " demanda=" << sumaDemandas << "\n";
         return 1;
     }
 
     resolver();
-    return 0;
 }
