@@ -1,0 +1,273 @@
+\documentclass[notumble,10pt]{leaflet}
+
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{microtype}
+% fontawesome5 no disponible - usar alternativas de texto
+\usepackage{tikz}
+\usetikzlibrary{babel, shapes.geometric, arrows.meta, positioning, shadows.blur, decorations.pathreplacing, calc, fadings}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{amsmath}
+\usepackage{enumitem}
+
+% Definición de paleta de colores moderna y profesional
+\definecolor{primary}{HTML}{1A365D}   % Azul oscuro corporativo
+\definecolor{secondary}{HTML}{2B6CB0} % Azul brillante
+\definecolor{accent}{HTML}{DD6B20}    % Naranja vibrante
+\definecolor{bglight}{HTML}{F7FAFC}   % Gris muy claro (fondo)
+\definecolor{textdark}{HTML}{2D3748}  % Gris oscuro (texto)
+
+\pagecolor{bglight}
+\color{textdark}
+
+% Estilo de cajas para resaltar información
+\tcbset{
+    mybox/.style={
+        colback=white,
+        colframe=primary,
+        boxrule=0.8pt,
+        arc=4pt,
+        left=5pt,right=5pt,top=5pt,bottom=5pt,
+        fonttitle=\bfseries\large,
+        coltitle=white,
+        boxsep=2pt
+    },
+    accentbox/.style={
+        colback=white,
+        colframe=accent,
+        boxrule=1pt,
+        arc=4pt,
+        left=5pt,right=5pt,top=5pt,bottom=5pt,
+        fonttitle=\bfseries,
+        coltitle=white,
+    }
+}
+
+% Personalización de secciones
+\usepackage{titlesec}
+\titleformat{\section}{\Large\bfseries\color{primary}}{}{0em}{}[\vspace{-0.2em}\rule{\linewidth}{1pt}]
+\titleformat{\subsection}{\large\bfseries\color{secondary}}{}{0em}{}
+
+% --- TÍTULO (PORTADA - Panel 1) ---
+\title{%
+  \vspace{0.2cm}
+  \normalsize\bfseries Universidad Nacional del Altiplano\\[0.05cm]
+  \footnotesize Facultad de Ingeniería Mecánica, Eléctrica, Electrónica y Sistemas\\[0.05cm]
+  \footnotesize Escuela Profesional de Ingeniería de Sistemas\\[0.3cm]
+  \begin{tikzpicture}[baseline]
+    \node[fill=primary, text=white, inner sep=10pt, rounded corners=8pt, align=center, text width=0.8\textwidth] {
+      \Large\bfseries Algoritmos\\[0.3em] Meméticos
+    };
+  \end{tikzpicture}\\[0.3cm]
+  \normalsize\color{secondary} Optimización Híbrida Inteligente\\[0.3cm]
+  \small\color{primary} \textbf{Investigación de Operaciones}\\[0.3cm]
+  \footnotesize Integrantes:\\[0.15cm]
+  \scriptsize Barriga Nina Pablo Sebastian\\
+  Condori Ticona Anthony\\
+  Pari Valencia Jhon Daniel\\
+  Jefry Edinson Ramos Castillo
+}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+% Agregamos un gráfico en la portada
+\begin{center}
+\begin{tikzpicture}[scale=0.65, transform shape]
+  % Fondo difuminado (Glow)
+  \fill[secondary!15, blur shadow={shadow blur steps=10, shadow blur radius=1.5ex}] (0,0) circle (2.2cm);
+  
+  % Círculos orbitales concéntricos
+  \draw[primary!30, dashed, thick] (0,0) circle (2.5cm);
+  \draw[primary!50, thick] (0,0) circle (1.8cm);
+  
+  % Iconos centrales (ADN y Cerebro)
+  \node[primary, scale=2.5] at (-0.6, 0.2) {\textbf{DNA}};
+  \node[accent, scale=2.5] at (0.6, -0.2) {\textbf{Meme}};
+  
+  % Conexiones tipo red neuronal
+  \draw[primary, thick, -{Stealth[length=2mm]}] (-0.3, 0.2) -- (0.2, -0.1);
+  \draw[primary, thick, -{Stealth[length=2mm]}] (-0.6, -0.6) -- (-0.2, -0.2);
+  \draw[primary, thick, -{Stealth[length=2mm]}] (0.6, 0.6) -- (0.2, 0.2);
+  
+  % Flechas circulares (Ciclo evolutivo)
+  \foreach \angle in {0, 90, 180, 270} {
+      \draw[->, >=Stealth, thick, accent, line width=1.2pt] 
+          (\angle+10:2.5cm) arc (\angle+10:\angle+80:2.5cm);
+  }
+  
+  % Nodos orbitales
+  \node[circle, fill=primary, inner sep=3pt] at (45:2.5cm) {};
+  \node[circle, fill=accent, inner sep=3pt] at (135:2.5cm) {};
+  \node[circle, fill=primary, inner sep=3pt] at (225:2.5cm) {};
+  \node[circle, fill=secondary, inner sep=3pt] at (315:2.5cm) {};
+\end{tikzpicture}
+\vspace{0.8cm}
+
+\textit{Evolución Biológica + Evolución Cultural}
+\end{center}
+
+\newpage
+
+% --- PANEL 2: INTRODUCCIÓN ---
+\section{¿Qué son los Algoritmos Meméticos?}
+Los \textbf{Algoritmos Meméticos (MA)} son métodos de optimización basados en poblaciones que combinan la evolución biológica (algoritmos genéticos) con el aprendizaje individual (búsqueda local).
+
+El término "meme", acuñado por Richard Dawkins, representa una unidad de información cultural que se transmite, adapta y mejora durante la vida del individuo, a diferencia de los genes que son estáticos.
+
+\begin{tcolorbox}[mybox, title=\textbf{!} El Concepto Clave]
+Mientras que en un algoritmo genético los individuos nacen y mueren con las mismas características base, en un algoritmo memético los individuos \textit{aprenden} y \textit{mejoran} su adaptación antes de reproducirse.
+\end{tcolorbox}
+
+\subsection{Origen e Historia}
+Fueron introducidos por Pablo Moscato en 1989. Surgieron como una alternativa para resolver problemas NP-duros donde los Algoritmos Genéticos tradicionales convergían prematuramente o eran ineficientes en la explotación local.
+
+\begin{tcolorbox}[mybox, title=\textbf{*} Conocimiento del Problema]
+Como establece el teorema de \textit{No-Free-Lunch} (Wolpert y Macready), el rendimiento de un algoritmo de búsqueda depende de la cantidad y calidad del conocimiento del problema que incorpora. Los MAs están diseñados intrínsecamente para explotar agresivamente dicho conocimiento a través de heurísticas.
+\end{tcolorbox}
+
+\newpage
+
+% --- PANEL 3: ESTRUCTURA ---
+\section{Arquitectura del Algoritmo}
+
+La estructura básica de un MA es un ciclo evolutivo potenciado:
+
+\begin{enumerate}[label=\textbf{\arabic*.}, leftmargin=*]
+    \item \textbf{Inicialización:} Se genera una población inicial (usualmente con heurísticas).
+    \item \textbf{Evaluación:} Se calcula el *fitness* de cada individuo.
+    \item \textbf{Selección:} Se eligen los padres para la reproducción.
+    \item \textbf{Recombinación (Crossover):} Se combinan genes para crear descendencia.
+    \item \textbf{Mutación:} Se introducen pequeños cambios aleatorios.
+    \item \textbf{\color{accent}Búsqueda Local:} ¡El paso memético! Los individuos exploran su vecindario para alcanzar un óptimo local.
+    \item \textbf{Reemplazo:} La nueva generación sustituye a la anterior.
+\end{enumerate}
+
+\begin{tcolorbox}[accentbox, title=\textbf{>}\_ Pseudocódigo: Búsqueda Local, fontupper=\small\ttfamily]
+\begin{flushleft}
+Procedure Local-Search-Engine(current)\\
+begin\\
+\hspace*{0.5cm}repeat\\
+\hspace*{1.0cm}new $\leftarrow$ GenerateNeighbor(current);\\
+\hspace*{1.0cm}if (Fg(new) $\geq$ Fg(current)) then\\
+\hspace*{1.5cm}current $\leftarrow$ new;\\
+\hspace*{0.5cm}until TerminationCriterion();\\
+\hspace*{0.5cm}return current;\\
+end
+\end{flushleft}
+\end{tcolorbox}
+
+\begin{tcolorbox}[accentbox, title=\textbf{<>} Ciclo de Población, fontupper=\small\ttfamily]
+\begin{flushleft}
+repeat\\
+\hspace*{0.5cm}newpop $\leftarrow$ GenerateNewPopulation(pop);\\
+\hspace*{0.5cm}pop $\leftarrow$ UpdatePopulation(pop, newpop);\\
+\hspace*{0.5cm}if pop has converged then\\
+\hspace*{1.0cm}pop $\leftarrow$ RestartPopulation(pop);\\
+until TerminationCriterion();
+\end{flushleft}
+\end{tcolorbox}
+
+\newpage
+
+% --- PANEL 4: VENTAJAS Y APLICACIONES ---
+\section{¿Por qué utilizarlos?}
+
+\subsection{Ventajas Principales}
+\begin{itemize}[leftmargin=*, itemsep=2pt]
+    \item \textbf{+} \textbf{Sinergia:} Equilibrio perfecto entre exploración global (recombinación) y explotación local.
+    \item \textbf{+} \textbf{Convergencia:} Alcanzan soluciones de alta calidad en menos generaciones que los AG puros.
+    \item \textbf{+} \textbf{Flexibilidad:} Permiten integrar conocimiento específico del problema en la búsqueda local.
+\end{itemize}
+
+\subsection{Aplicaciones Reales}
+Los MAs son el estado del arte para resolver problemas complejos de Ingeniería e Investigación de Operaciones:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Rutas de Vehículos (VRP):} Optimización logística y distribución.
+    \item \textbf{Horarios (Timetabling):} Asignación de clases, turnos médicos y vuelos.
+    \item \textbf{Machine Learning:} Entrenamiento de Redes Neuronales y selección de características.
+    \item \textbf{Bioinformática:} Plegamiento de proteínas y alineamiento de secuencias.
+    \item \textbf{Problemas Clásicos NP-Duros:} Particionamiento de Grafos (Graph Partitioning), Coloración de Grafos, Set Covering.
+    \item \textbf{Problemas de Asignación:} Quadratic Assignment y Min Generalised Assignment.
+\end{itemize}
+
+\begin{tcolorbox}[mybox, title=\textbf{1} Rendimiento Comprobado]
+Décadas de investigación han demostrado que los Algoritmos Meméticos superan consistentemente a sus contrapartes clásicas (AG puros o Simulated Annealing) en problemas fuertemente combinatorios.
+\end{tcolorbox}
+
+\newpage
+
+% --- PANEL 5: DISEÑO Y DESAFÍOS ---
+\section{Consideraciones de Diseño}
+
+Para diseñar un Algoritmo Memético exitoso, se deben tomar decisiones críticas:
+
+\begin{tcolorbox}[mybox, title=\textbf{=} Parámetros Clave]
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Frecuencia:} ¿Con qué frecuencia se aplica la búsqueda local?
+    \item \textbf{Intensidad:} ¿Cuántos pasos de búsqueda local se permiten por individuo?
+    \item \textbf{Diversidad:} ¿Cómo evitar que los óptimos locales idénticos llenen la población?
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Operadores de Recombinación}
+A diferencia de los enfoques "ciegos" de los AG, los MAs suelen usar \textbf{Recombinación Heurística}. El conocimiento del problema se utiliza para guiar inteligentemente qué características (\textit{features}) de los padres se transmiten a la descendencia, asegurando viabilidad y alta calidad.
+
+\subsection{El Equilibrio Computacional}
+La búsqueda local consume recursos. El gran reto es el compromiso (\textit{trade-off}) entre el esfuerzo computacional invertido en la explotación local frente a la exploración evolutiva.
+
+\begin{center}
+\begin{tikzpicture}[scale=0.85, transform shape]
+  % Fondo suave general
+  \fill[secondary!5, rounded corners=3mm] (0,0) rectangle (4.5, 4.5);
+  
+  % Área de Balance Óptimo (Sweet Spot)
+  \fill[inner color=accent!40, outer color=accent!0] (2.5, 2.5) circle (1.8cm);
+
+  % Ejes
+  \draw[thick, -{Stealth[length=2.5mm]}, textdark] (0,0) -- (5,0) node[anchor=north, font=\small\bfseries] {Exploración Global};
+  \draw[thick, -{Stealth[length=2.5mm]}, textdark] (0,0) -- (0,5) node[anchor=east, font=\small\bfseries, rotate=90, yshift=4mm] {Explotación Local};
+  
+  % Etiquetas de Zonas
+  \node[textdark!60, font=\scriptsize\bfseries, align=center] at (1.2, 4) {Convergencia\\Prematura};
+  \node[textdark!60, font=\scriptsize\bfseries, align=center] at (4, 1) {Costo\\Excesivo};
+
+  % Punto Óptimo Memético
+  \fill[primary, blur shadow={shadow blur steps=5}] (2.5, 2.5) circle (4pt);
+  \node[primary, font=\bfseries, fill=white, inner sep=2pt, rounded corners=2pt] at (2.5, 3) {Balance Óptimo MA};
+  
+  % Líneas guía elegantes
+  \draw[densely dashed, thick, primary!50] (2.5, 0) -- (2.5, 2.5);
+  \draw[densely dashed, thick, primary!50] (0, 2.5) -- (2.5, 2.5);
+\end{tikzpicture}
+\end{center}
+
+\newpage
+
+% --- PANEL 6: CONCLUSIÓN (CONTRAPORTADA) ---
+\section{Conclusión}
+
+Los Algoritmos Meméticos representan una de las aproximaciones más poderosas en la Inteligencia Computacional moderna. 
+
+Al reconocer que la evolución biológica no es el único mecanismo de adaptación en la naturaleza, e incorporar la noción de evolución cultural (memes), logran un rendimiento superior en problemas de optimización combinatoria.
+
+\vspace{1cm}
+\begin{tcolorbox}[colback=primary!10, colframe=primary, arc=5pt]
+\centering
+\Large\textbf{-- Resumen}\\
+\vspace{0.3cm}
+\normalsize AG (Naturaleza) + BL (Aprendizaje) = MA (Excelencia)
+\end{tcolorbox}
+
+\vfill
+
+\end{document}
